@@ -27,4 +27,3 @@ private:
     int filas;
     int columnas;
 };
-
