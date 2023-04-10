@@ -57,7 +57,6 @@ Matriz2D t(Matriz2D& m) {
 }
 
 std::ostream& operator<<(std::ostream& os, const Matriz2D& m) {
-os << fixed << setprecision(2);
     for (int i = 0; i < m.filas; ++i) {
         for (int j = 0; j < m.columnas; ++j) {
             os << m.ptr[i][j] << ' ';
