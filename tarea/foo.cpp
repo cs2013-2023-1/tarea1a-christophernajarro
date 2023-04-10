@@ -1,25 +1,39 @@
-#include <cstdlib>
-#include <ctime>
 #include "foo.h"
 
-Matriz2D::Matriz2D() : filas(3), columnas(3) {
-    allocateMemory(filas, columnas);
-    initializeMatrix();
+Matriz2D::Matriz2D() : ptr(nullptr), filas(3), columnas(3) {
+    ptr = new float*[3];
+    for (int i = 0; i < 3; ++i) {
+        ptr[i] = new float[3];
+        for (int j = 0; j < 3; ++j) {
+            ptr[i][j] = static_cast<float>(rand()) / static_cast<float>(RAND_MAX); // Inicializa la matriz con números aleatorios entre 0 y 1
+        }
+    }
 }
 
 Matriz2D::Matriz2D(int n) : filas(n), columnas(n) {
-    allocateMemory(filas, columnas);
-    initializeMatrix();
+    ptr = new float*[n];
+    for (int i = 0; i < n; ++i) {
+        ptr[i] = new float[n];
+        for (int j = 0; j < n; ++j) {
+            ptr[i][j] = static_cast<float>(rand()) / static_cast<float>(RAND_MAX); // Inicializa la matriz con números aleatorios entre 0 y 1
+        }
+    }
 }
 
 Matriz2D::Matriz2D(int n, int m) : filas(n), columnas(m) {
-    allocateMemory(filas, columnas);
-    initializeMatrix();
+    ptr = new float*[filas];
+    for (int i = 0; i < filas; ++i) {
+        ptr[i] = new float[columnas];
+        for (int j = 0; j < columnas; ++j) {
+            ptr[i][j] = static_cast<float>(rand()) / static_cast<float>(RAND_MAX); // Inicializa la matriz con números aleatorios entre 0 y 1
+        }
+    }
 }
 
 Matriz2D::Matriz2D(const Matriz2D& m) : filas(m.filas), columnas(m.columnas) {
-    allocateMemory(filas, columnas);
+    ptr = new float*[filas];
     for (int i = 0; i < filas; ++i) {
+        ptr[i] = new float[columnas];
         for (int j = 0; j < columnas; ++j) {
             ptr[i][j] = m.ptr[i][j];
         }
@@ -32,150 +46,113 @@ Matriz2D::Matriz2D(Matriz2D&& m) : ptr(m.ptr), filas(m.filas), columnas(m.column
     m.columnas = 0;
 }
 
-Matriz2D::~Matriz2D() {
-    if (ptr) {
-        for (int i = 0; i < filas; ++i) {
-            delete[] ptr[i];
-        }
-        delete[] ptr;
-    }
-}
-
-void Matriz2D::allocateMemory(int n, int m) {
-    ptr = new float*[n];
-    for (int i = 0; i < n; ++i) {
-        ptr[i] = new float[m];
-    }
-}
-
-void Matriz2D::initializeMatrix() {
-    srand(static_cast<unsigned>(time(0)));
-    for (int i = 0; i < filas; ++i) {
-        for (int j = 0; j < columnas; ++j) {
-            ptr[i][j] = randFloat();
+Matriz2D t(Matriz2D& m) {
+    Matriz2D transpuesta(m.getColumnas(), m.getFilas());
+    for (int i = 0; i < m.getFilas(); ++i) {
+        for (int j = 0; j < m.getColumnas(); ++j) {
+            transpuesta.ptr[j][i] = m.ptr[i][j];
         }
     }
+    return transpuesta;
 }
 
-{
-Matriz2D transposed(m.columnas, m.filas);
-for (int i = 0; i < m.columnas; ++i) {
-for (int j = 0; j < m.filas; ++j) {
-transposed.ptr[i][j] = m.ptr[j][i];
-}
-}
-return transposed;
-}
-
-ostream& operator<<(ostream& os, const Matriz2D& m) {
-    os << fixed << setprecision(2);
+std::ostream& operator<<(std::ostream& os, const Matriz2D& m) {
+os << fixed << setprecision(2);
     for (int i = 0; i < m.filas; ++i) {
         for (int j = 0; j < m.columnas; ++j) {
-            os << m.ptr[i][j] << " ";
+            os << m.ptr[i][j] << ' ';
         }
-        os << endl;
+        os << '\n';
     }
     return os;
 }
 
 Matriz2D operator+(const Matriz2D& m1, const Matriz2D& m2) {
     if (m1.filas != m2.filas || m1.columnas != m2.columnas) {
-        throw "Las matrices no tienen las mismas dimensiones";
+        throw std::invalid_argument("Las dimensiones de las matrices no coinciden para la suma.");
     }
-    Matriz2D result(m1.filas, m1.columnas);
+
+    Matriz2D resultado(m1.filas, m1.columnas);
     for (int i = 0; i < m1.filas; ++i) {
         for (int j = 0; j < m1.columnas; ++j) {
-            result.ptr[i][j] = m1.ptr[i][j] + m2.ptr[i][j];
+            resultado.ptr[i][j] = m1.ptr[i][j] + m2.ptr[i][j];
         }
     }
-    return result;
+    return resultado;
 }
 
 Matriz2D operator-(const Matriz2D& m1, const Matriz2D& m2) {
     if (m1.filas != m2.filas || m1.columnas != m2.columnas) {
-        throw "Las matrices no tienen las mismas dimensiones";
+        throw std::invalid_argument("Las dimensiones de las matrices no coinciden para la resta.");
     }
-    Matriz2D result(m1.filas, m1.columnas);
+
+    Matriz2D resultado(m1.filas, m1.columnas);
     for (int i = 0; i < m1.filas; ++i) {
         for (int j = 0; j < m1.columnas; ++j) {
-            result.ptr[i][j] = m1.ptr[i][j] - m2.ptr[i][j];
+            resultado.ptr[i][j] = m1.ptr[i][j] - m2.ptr[i][j];
         }
     }
-    return result;
+    return resultado;
 }
 
 Matriz2D operator*(const Matriz2D& m1, const Matriz2D& m2) {
     if (m1.columnas != m2.filas) {
-        throw "Las matrices no tienen las dimensiones compatibles para multiplicarse";
+        throw std::invalid_argument("Las dimensiones de las matrices no coinciden para la multiplicación.");
     }
-    Matriz2D result(m1.filas, m2.columnas);
+
+    Matriz2D resultado(m1.filas, m2.columnas);
     for (int i = 0; i < m1.filas; ++i) {
         for (int j = 0; j < m2.columnas; ++j) {
-            float sum = 0;
             for (int k = 0; k < m1.columnas; ++k) {
-                sum += m1.ptr[i][k] * m2.ptr[k][j];
+                resultado.ptr[i][j] += m1.ptr[i][k] * m2.ptr[k][j];
             }
-            result.ptr[i][j] = sum;
         }
     }
-    return result;
+    return resultado;
 }
 
 Matriz2D operator+(const Matriz2D& m, float n) {
-    Matriz2D result(m.filas, m.columnas);
+    Matriz2D resultado(m.filas, m.columnas);
     for (int i = 0; i < m.filas; ++i) {
         for (int j = 0; j < m.columnas; ++j) {
-            result.ptr[i][j] = m.ptr[i][j] + n;
+            resultado.ptr[i][j] = m.ptr[i][j] + n;
         }
     }
-    return result;
+    return resultado;
 }
 
-{
-Matriz2D result(m.filas, m.columnas);
-for (int i = 0; i < m.filas; ++i) {
-for (int j = 0; j < m.columnas; ++j) {
-result.ptr[i][j] = m.ptr[i][j] - n;
-}
-}
-return result;
+Matriz2D operator-(const Matriz2D& m, float n) {
+    return m + (-n);
 }
 
 Matriz2D operator*(const Matriz2D& m, float n) {
-    Matriz2D result(m.filas, m.columnas);
+    Matriz2D resultado(m.filas, m.columnas);
     for (int i = 0; i < m.filas; ++i) {
         for (int j = 0; j < m.columnas; ++j) {
-            result.ptr[i][j] = m.ptr[i][j] * n;
+            resultado.ptr[i][j] = m.ptr[i][j] * n;
         }
     }
-    return result;
+    return resultado;
 }
 
 Matriz2D operator/(const Matriz2D& m, float n) {
     if (n == 0) {
-        throw "División por cero";
+        throw std::invalid_argument("No se puede dividir por cero.");
     }
-    Matriz2D result(m.filas, m.columnas);
-    for (int i = 0; i < m.filas; ++i) {
-        for (int j = 0; j < m.columnas; ++j) {
-            result.ptr[i][j] = m.ptr[i][j] / n;
-        }
-    }
-    return result;
+    return m * (1 / n);
 }
 
-float Matriz2D::get(int i, int j) const {
+float Matriz2D::get(int i, int j) {
+    if (i < 0 || i >= filas || j < 0 || j >= columnas) {
+        throw std::out_of_range("Índices fuera de rango.");
+    }
     return ptr[i][j];
 }
 
-int Matriz2D::getFilas() const {    
+int Matriz2D::getFilas() {
     return filas;
 }
 
-int Matriz2D::getColumnas() const {
+int Matriz2D::getColumnas() {
     return columnas;
-}
-
-float Matriz2D::randFloat() {
-    return static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
 }
